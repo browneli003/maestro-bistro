@@ -1,56 +1,56 @@
-// create variable to hold db connection
+// variable to hold databse connection
 let db;
-// establish a connection to IndexedDB database called 'pizza_hunt' and set it to version 1
-const request = indexedDB.open('budget_tracker', 1);
-// this event will emit if the database version changes (nonexistant to version 1, v1 to v2, etc.)
-request.onupgradeneeded = function(event) {
-    // save a reference to the database 
-    const db = event.target.result;
-    // create an object store (table) called `new_pizza`, set it to have an auto incrementing primary key of sorts 
-    db.createObjectStore('new_trans', { autoIncrement: true });
-  };
-  // upon a successful 
-request.onsuccess = function(event) {
-    // when db is successfully created with its object store (from onupgradedneeded event above) or simply established a connection, save reference to db in global variable
-    db = event.target.result;
-  
-    // check if app is online, if yes run uploadPizza() function to send all local db data to api
-    if (navigator.onLine) {
-      // we haven't created this yet, but we will soon, so let's comment it out for now
-      // uploadPizza();
-    }
-  };
-  
-  request.onerror = function(event) {
-    // log error here
-    console.log(event.target.errorCode);
-  };
-  // This function will be executed if we attempt to submit a new pizza and there's no internet connection
-function saveRecord(record) {
-    // open a new transaction with the database with read and write permissions 
-    const transaction = db.transaction(['new_trans'], 'readwrite');
-  
-    // access the object store for `new_pizza`
-    const transObjectStore = transaction.objectStore('new_trans');
-  
-    // add record to your store with add method
-    transObjectStore.add(record);
-  };
+// establish connection to budget db set to version 1
+const request = indexedDB.open('budget', 1);
 
-  function uploadTrans() {
-    // open a transaction on your db
-    const transaction = db.transaction(['new_trans'], 'readwrite');
-  
-    // access your object store
-    const transObjectStore = transaction.objectStore('new_trans');
-  
-    // get all records from store and set to a variable
-    const getAll = transObjectStore.getAll();
-  
-    // more to come...
-    // upon a successful .getAll() execution, run this function
-getAll.onsuccess = function() {
-    // if there was data in indexedDb's store, let's send it to the api server
+// this event will be triggered if db version changes
+request.onupgradeneeded = function (e) {
+  // save ref to db
+  const db = e.target.result;
+  // object to store table called 'new_budget' set to autoincrement
+  db.createObjectStore('new_tran', { autoIncrement: true });
+};
+
+// succesful connection
+request.onsuccess = function (e) {
+  // when db is successfully created with its object store (from onupgradedneeded event above) or simply established a connection, save reference to db in global variable
+  db = e.target.result;
+
+  // check if online if so run uploadBudget() to send local bd data to api
+  if (navigator.onLine) {
+    // uploadTran();
+  }
+}
+
+request.onerror = function (e) {
+  console.log(e.target.errorCode);
+};
+
+// function executed if attempt to send data with no interet
+function saveRecord(record) {
+  // open new transaction with db with read write permissions
+  const transaction = db.transaction(['new_tran'], 'readwrite');
+
+  // access the object store from 'new_tran'
+  const tranObjectStore = transaction.objectStore('new_tran');
+
+  // add record to store
+  tranObjectStore.add(record);
+};
+
+function uploadTran() {
+  // open a transaction on your db
+  const transaction = db.transaction(['new_tran'], 'readwrite');
+
+  // access object store
+  const tranObjectStore = transaction.objectStore('new_tran');
+
+  // get records from store and set to var
+  const getAll = tranObjectStore.getAll();
+
+  // upon successful .getAll() execution run this function
+  getAll.onsuccess = function () {
+    // if data in indexedDB store send to api server
     if (getAll.result.length > 0) {
       fetch('/api/transaction', {
         method: 'POST',
@@ -66,13 +66,13 @@ getAll.onsuccess = function() {
             throw new Error(serverResponse);
           }
           // open one more transaction
-          const transaction = db.transaction(['new_trans'], 'readwrite');
-          // access the new_pizza object store
-          const transObjectStore = transaction.objectStore('trans');
+          const transaction = db.transaction(['new_tran'], 'readwrite');
+          // access the new_tran object
+          const tranObjectStore = transaction.objectStore('new_tran');
           // clear all items in your store
-          transObjectStore.clear();
+          tranObjectStore.clear()
 
-          alert('Transactions submitted!');
+          alert('All saved transactions have been submitted!');
         })
         .catch(err => {
           console.log(err);
@@ -81,5 +81,5 @@ getAll.onsuccess = function() {
   }
 };
 
-// listen for app coming back online
-window.addEventListener('online', uploadTrans);
+// listen for internet connection
+window.addEventListener('online', uploadTran);
